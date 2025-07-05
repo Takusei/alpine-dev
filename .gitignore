@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# But do not ignore the .devcontainer directory and its contents
+!.devcontainer/
+!.devcontainer/**
+
+# Also don't ignore the .gitignore file itself
+!.gitignore
