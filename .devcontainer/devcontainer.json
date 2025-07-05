@@ -1,8 +1,9 @@
 {
-  "name": "Alpine ZSH Dev",
+  "name": "Ubuntu Development Container",
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "runArgs": ["--name", "DevContainer"],
   "settings": {
     "terminal.integrated.defaultProfile.linux": "zsh"
   },
