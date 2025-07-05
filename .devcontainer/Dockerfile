@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
     llvm libncurses5-dev libncursesw5-dev xz-utils \
     tk-dev libffi-dev liblzma-dev locales \
+    docker.io \
  && locale-gen en_US.UTF-8 \
  && ln -s /usr/bin/batcat /usr/local/bin/bat || true \
  && apt-get clean
