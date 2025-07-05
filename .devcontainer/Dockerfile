@@ -1,51 +1,71 @@
-FROM alpine
+FROM ubuntu:22.04
 
-# Install required tools
-RUN apk update && apk add --no-cache \
-    bash \
-    zsh \
-    git \
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
     curl \
+    git \
+    zsh \
+    bash \
     nano \
-    build-base \
     exa \
-    bat
+    bat \
+    build-essential \
+    libssl-dev \
+    ca-certificates \
+    gnupg \
+    dirmngr \
+    python3 \
+    unzip \
+    wget \
+    && apt-get clean
 
-# Install Oh My Zsh (non-interactive)
+# Symlink batcat if needed (Ubuntu uses batcat instead of bat)
+RUN ln -s /usr/bin/batcat /usr/local/bin/bat || true
+
+# Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install Oh My Zsh plugins
-RUN git clone https://github.com/zsh-users/zsh-autosuggestions            /root/.oh-my-zsh/custom/plugins/zsh-autosuggestions && \
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting       /root/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting && \
-    git clone https://github.com/MichaelAquilina/zsh-you-should-use.git  /root/.oh-my-zsh/custom/plugins/you-should-use && \
-    git clone https://github.com/mrxcitement/zsh-bat.git                 /root/.oh-my-zsh/custom/plugins/zsh-bat
+# Install Zsh plugins
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions /root/.oh-my-zsh/custom/plugins/zsh-autosuggestions && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting /root/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting && \
+    git clone https://github.com/MichaelAquilina/zsh-you-should-use.git /root/.oh-my-zsh/custom/plugins/you-should-use && \
+    git clone https://github.com/mrxcitement/zsh-bat.git /root/.oh-my-zsh/custom/plugins/zsh-bat
 
-# Install Powerlevel10k theme
+# Install Powerlevel10k
 RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /root/.oh-my-zsh/custom/themes/powerlevel10k
 
-# Install asdf version manager
-RUN git clone https://github.com/asdf-vm/asdf.git /root/.asdf --branch v0.18.0
+# Install asdf (latest stable recommended)
+ENV ASDF_VERSION=v0.15.0
+RUN git clone https://github.com/asdf-vm/asdf.git /root/.asdf --branch ${ASDF_VERSION}
 
-# Add asdf to shell profile (zsh example)
-RUN echo '. /root/.asdf/asdf.sh' >> /root/.zshrc && \
-    echo '. /root/.asdf/completions/asdf.bash' >> /root/.zshrc
+# Configure asdf and PATH
+RUN echo 'typeset -g POWERLEVEL9K_INSTANT_PROMPT=off' >> /root/.zshrc && \
+    echo '. /root/.asdf/asdf.sh' >> /root/.zshrc && \
+    echo '. /root/.asdf/completions/asdf.bash' >> /root/.zshrc && \
+    echo 'export PATH="/root/.asdf/bin:/root/.asdf/shims:$PATH"' >> /root/.zshrc
 
-# Install example plugin and tool, e.g., Node.js
-RUN /bin/bash -c "source /root/.asdf/asdf.sh && \
-    asdf plugin-add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
+# Install Node.js via asdf
+RUN bash -c ". /root/.asdf/asdf.sh && \
+    asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
     asdf install nodejs latest && \
     asdf global nodejs latest"
 
-# Clone your custom zsh config
-RUN git clone https://github.com/Takusei/codeSetting.git /root/codeSetting
+# Set alias
+RUN echo 'alias ccat="bat"' >> /root/.zshrc
 
-# Source your custom zsh config
-RUN printf '\nsource /root/codeSetting/zshrc\n' >> /root/.zshrc
+# Clone custom Zsh config & load it
+RUN git clone https://github.com/Takusei/codeSetting.git /root/codeSetting && \
+    echo 'source /root/codeSetting/zshrc' >> /root/.zshrc && \
+    echo '[[ -f /root/codeSetting/.p10k.zsh ]] && source /root/codeSetting/.p10k.zsh' >> /root/.zshrc && \
+    sed -i 's|/home/jaycen|/root|g' /root/codeSetting/zshrc || true
 
-RUN echo "alias ccat='bat'" >> /root/.zshrc
+# Optional: Avoid errors if kubectl isn't installed
+RUN echo '(( $+commands[kubectl] )) && compdef kubectl' >> /root/.zshrc
 
 # Set working directory
 WORKDIR /workspace
 
-# Set zsh as the default shell
+# Default shell
 CMD ["zsh"]
