@@ -61,8 +61,6 @@ RUN git clone https://github.com/Takusei/codeSetting.git /root/codeSetting && \
     echo '[[ -f /root/codeSetting/.p10k.zsh ]] && source /root/codeSetting/.p10k.zsh' >> /root/.zshrc && \
     sed -i 's|/home/jaycen|/root|g' /root/codeSetting/zshrc || true
 
-# Optional: Avoid errors if kubectl isn't installed
-RUN echo '(( $+commands[kubectl] )) && compdef kubectl' >> /root/.zshrc
 
 # Set working directory
 WORKDIR /workspace
